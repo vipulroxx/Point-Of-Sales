@@ -2,9 +2,9 @@
 
 Your lab 9 repository should include all you relevant files (and folders) from lab 8.  In other words I should be able to clone the repository, run your server, and test your results without any extra steps.
 
-Now it is it time to finish off this register project.  As you implement the fucntionality below, remember that your primary mode of interaction is through your REST interface.
+Now it is it time to finish off this register project.  As you implement the functionality below, remember that your primary mode of interaction is through your REST interface.
 
-* Add a login/logout function.  If no user is logged in, then no till buttons should be useable (you can make them invisible, or just not operational)
+* Add a login/logout function.  If no user is logged in, then no till buttons should be useable (you can make them invisible, or just not operational.)  Use whatever technique you would like.  Be sure to document this in your manual (discussed at the end of this lab.)
 * Think about what it would take to write a procedure (or trigger) that would identify DEALS in the current till_items and update your table to reflect the new pricing.  Talk it over with your partners until you are convinced that you understand what needs to be done... then relax and congratulate yourselves on a job well done.
 *  Modify your click API entry so the time stamp of a button is also recorded.
 * Add REST handlers to deal with SALE and VOID.  You can decide whether or not to use till_buttons or hard-code the buttons into your angular template.  Produce your logic and button accordingly:
