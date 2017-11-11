@@ -4,11 +4,30 @@ credentials=require('./credentials.json'),
 app = express(),
 port = process.env.PORT || 1337;
 
+var Promise = require('bluebird');
+var using = Promise.using;
+Promise.promisifyAll(require("mysql/lib/Connection").prototype);
+Promise.promisifyAll(require("mysql/lib/Pool").prototype);
+
 credentials.host='ids.morris.umn.edu'; //setup database credentials
 var databaseName = "schr1230";
 
 // Created a connection pool
 connectionPool = mysql.createPool(credentials); // setup the connection
+
+//
+var getConnection = function(){
+  return connectionPool.getConnectionAsync().disposer(
+    function(connection){return connection.release();}
+  );
+};
+
+var query = function(command){
+  return using(getConnection(), function(connection)
+    {
+      return connection.queryAsync(command);
+    }); 
+};
 
 // Attempts to resolve all get requests by reading from /public before
 // trying other routes
@@ -21,67 +40,63 @@ app.use(express.static(__dirname + '/public'));
 
 app.get("/buttons",function(req,res){
   var sql = mysql.format('SELECT buttonID,`left`,top,width,invID,item AS label FROM ??.till_buttons,??.inventory WHERE invID = id', [databaseName,databaseName]);
-  connectionPool.query(sql,(function(res){return function(err,rows,fields){
-    if(err) {
-      console.log("Error: ?", err);
-      res.sendStatus(500);   // If any error occurs, it is probably not the client's fault
-    } else {
-      res.send(rows);
-    }
-  }})(res));
+  query(sql).then(function(rows){
+    res.send(rows);
+  }).catch(function(err){
+    console.log("Error in 'GET /buttons':");
+    console.log(err);
+    res.sendStatus(500);
+  });
 });
 
 app.get("/transaction" , function(req,res) {
-  connectionPool.query("SELECT itemId,count(itemId) AS count,price, item FROM "+databaseName+ ".transaction," +databaseName+ ".prices," +databaseName+ ".inventory"+
-			" WHERE prices.id=itemId AND itemId=inventory.id GROUP BY itemId;", function(err,rows,field) {
-    if(err) {
-      console.log("Error: ?", err);
-      res.sendStatus(500);  // If any error occurs, it is probably not the client's fault
-    } else {
-      res.send(rows);
-    }
+  query("SELECT itemId,count(itemId) AS count,price, item FROM "+databaseName+ ".transaction," +databaseName+ ".prices," +databaseName+ ".inventory"+
+			" WHERE prices.id=itemId AND itemId=inventory.id GROUP BY itemId;").then(function(rows) {
+    res.send(rows);
+  }).catch(function(err){
+    console.log("Error in 'GET /transaction':");
+    console.log(err);
+    res.sendStatus(500);
   });
 });
 
 app.delete("/transaction/:itemId", function(req, res){
   var itemId = req.params.itemId;
-  connectionPool.query(mysql.format("DELETE FROM ??.transaction WHERE itemId = ?", [databaseName, itemId]), function(err, rows, fields){
-    if(err) {
-      console.log("Error: ?", err);
-      res.sendStatus(500); // If any error occurs, it is probably not the client's fault
-    } else {
-      if(rows.affectedRows == 0) {
+  query(mysql.format("DELETE FROM ??.transaction WHERE itemId = ?", [databaseName, itemId])).then(function(result){
+      if(result.affectedRows == 0) {
         res.sendStatus(404); // Can't delete nonexistent items
       } else {
        res.send('');
       }
-   }
+  }).catch(function(err){
+    console.log("Error in 'DELETE /transaction/:itemId':");
+    console.log(err);
+    res.sendStatus(500);
   });
 });
 
 app.delete("/transaction" , function(req, res) {
-  connectionPool.query(mysql.format("TRUNCATE ??.transaction", databaseName), function(err,rows,fields) {
-    if(err) {
-      console.log("Error: ?", err);
-      res.sendStatus(500); // If any error occurs, it is probably not the client's fault
-    } else {
-      res.send('');
-    }
- });
+  query(mysql.format("TRUNCATE ??.transaction", databaseName)).then(function(result) {
+    res.send('');
+  }).catch(function(err){
+    console.log("Error in 'DELETE /transaction':");
+    console.log(err);
+    res.sendStatus(500);
+  });
 });
  
 app.post("/transaction/:itemId" , function(req,res) {
   var itemId = req.params.itemId;
-  connectionPool.query(mysql.format("INSERT INTO ??.transaction value(?)", [databaseName, itemId]), function(err,rows,field) {
-    if(err) {
-      console.log("Error: ?",err);
-      if(err.code == 'ER_NO_REFERENCED_ROW_2'){
-         res.status(400).send('Invalid Item ID');
-      } else {
-         res.sendStatus(500); // If any OTHER error occurs, it is probably not the client's fault
-      }
+  query(mysql.format("INSERT INTO ??.transaction value(?)", [databaseName, itemId])).then(function(result) {
+    res.send('');
+  }).catch(function(err){
+    console.log("Error in 'POST /transaction/:itemId':");
+    if(err.code == 'ER_NO_REFERENCED_ROW_2'){
+      console.log("Invalid Item ID");
+      res.status(400).send('Invalid Item ID');
     } else {
-      res.send('');
+      console.log(err);
+      res.sendStatus(500); 
     }
   });
 });
