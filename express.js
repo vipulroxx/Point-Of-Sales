@@ -66,7 +66,10 @@ app.delete("/transaction/:itemId", function(req, res){
       if(result.affectedRows == 0) {
         res.sendStatus(404); // Can't delete nonexistent items
       } else {
-       res.send('');
+        query(mysql.format("INSERT INTO ??.transaction_time (timestamp,action) VALUES (CURRENT_TIME() , 'deleted')", databaseName))
+          .then(function(result) {
+            res.send('');
+          });
       }
   }).catch(function(err){
     console.log("Error in 'DELETE /transaction/:itemId':");
@@ -87,18 +90,22 @@ app.delete("/transaction" , function(req, res) {
  
 app.post("/transaction/:itemId" , function(req,res) {
   var itemId = req.params.itemId;
-  query(mysql.format("INSERT INTO ??.transaction value(?)", [databaseName, itemId])).then(function(result) {
-    res.send('');
-  }).catch(function(err){
-    console.log("Error in 'POST /transaction/:itemId':");
-    if(err.code == 'ER_NO_REFERENCED_ROW_2'){
-      console.log("Invalid Item ID");
-      res.status(400).send('Invalid Item ID');
-    } else {
-      console.log(err);
-      res.sendStatus(500); 
-    }
-  });
+  query(mysql.format("INSERT INTO ??.transaction value(?)", [databaseName, itemId]))
+    .then(function(result) {
+      query(mysql.format("INSERT INTO ??.transaction_time (timestamp,action) VALUES (CURRENT_TIME() , 'clicked')", databaseName))
+        .then(function(result) {
+          res.send('');
+        });
+    }).catch(function(err){
+      console.log("Error in 'POST /transaction/:itemId':");
+      if(err.code == 'ER_NO_REFERENCED_ROW_2'){
+        console.log("Invalid Item ID");
+        res.status(400).send('Invalid Item ID');
+      } else {
+        console.log(err);
+        res.sendStatus(500); 
+      }
+    });
 });
 
 app.listen(port);
