@@ -79,13 +79,33 @@ app.delete("/transaction/:itemId", function(req, res){
 });
 
 app.delete("/transaction" , function(req, res) {
-  query(mysql.format("TRUNCATE ??.transaction", databaseName)).then(function(result) {
-    res.send('');
-  }).catch(function(err){
-    console.log("Error in 'DELETE /transaction':");
-    console.log(err);
-    res.sendStatus(500);
-  });
+  
+  query(mysql.format("INSERT INTO ??.transactions_archive (voided, user, first_timestamp, last_timestamp) values(true, NULL, (SELECT min(timestamp) from ??.transaction_time), (SELECT max(timestamp) from ??.transaction_time))", [databaseName, databaseName, databaseName]))
+    .then(function(result){
+      tid = result.insertId;
+      return query(mysql.format("SELECT * FROM ??.current_transaction_view", databaseName));
+    })
+    .then(function(results){
+      results = results.map(function(row){
+        return "(" + tid + ", " + mysql.escape(row.item) + ", " + row.count + ", " + (row.price * row.count) + ")";
+      });
+      var resultString = results.join(",");
+      return query(mysql.format("INSERT INTO ??.transaction_items_archive (tid, item, count, subtotal) values" + resultString, databaseName));
+    })
+    .then(function(){
+      return query(mysql.format("TRUNCATE ??.transaction", databaseName));
+    })
+    .then(function(){
+      return query(mysql.format("TRUNCATE ??.transaction_time", databaseName));
+    })
+    .then(function(){
+      res.send('');
+    })
+    .catch(function(err){
+      console.log("Error in 'DELETE /transaction':");
+      console.log(err);
+      res.sendStatus(500);
+    });
 });
  
 app.post("/transaction/:itemId" , function(req,res) {
