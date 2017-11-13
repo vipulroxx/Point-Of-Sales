@@ -1,4 +1,5 @@
 var express=require('express'),
+bodyParser = require('body-parser'),
 mysql=require('mysql'),
 credentials=require('./credentials.json'),
 app = express(),
@@ -28,6 +29,8 @@ var query = function(command){
       return connection.queryAsync(command);
     }); 
 };
+
+app.use(bodyParser.json()); //for parsing application/json
 
 // Attempts to resolve all get requests by reading from /public before
 // trying other routes
@@ -107,7 +110,41 @@ app.delete("/transaction" , function(req, res) {
       res.sendStatus(500);
     });
 });
- 
+
+app.post("/transaction", function(req,res) {
+  if (req.body["action"] == "commit sale") {
+    // TODO: we don't actually reduce the counts in `inventory` when selling items
+    query(mysql.format("INSERT INTO ??.transactions_archive (voided, user, first_timestamp, last_timestamp) values(false, NULL, (SELECT min(timestamp) from ??.transaction_time), (SELECT max(timestamp) from ??.transaction_time))", [databaseName, databaseName, databaseName]))
+    .then(function(result){
+      tid = result.insertId;
+      return query(mysql.format("SELECT * FROM ??.current_transaction_view", databaseName));
+    })
+    .then(function(results){
+      results = results.map(function(row){
+        return "(" + tid + ", " + mysql.escape(row.item) + ", " + row.count + ", " + (row.price * row.count) + ")";
+      });
+      var resultString = results.join(",");
+      return query(mysql.format("INSERT INTO ??.transaction_items_archive (tid, item, count, subtotal) values" + resultString, databaseName));
+    })
+    .then(function(){
+      return query(mysql.format("TRUNCATE ??.transaction", databaseName));
+    })
+    .then(function(){
+      return query(mysql.format("TRUNCATE ??.transaction_time", databaseName));
+    })
+    .then(function(){
+      res.send('');
+    })
+    .catch(function(err){
+      console.log("Error in 'DELETE /transaction':");
+      console.log(err);
+      res.sendStatus(500);
+    });
+  } else {
+    res.sendStatus(400);
+  }
+});
+
 app.post("/transaction/:itemId" , function(req,res) {
   var itemId = req.params.itemId;
   query(mysql.format("INSERT INTO ??.transaction value(?)", [databaseName, itemId]))
