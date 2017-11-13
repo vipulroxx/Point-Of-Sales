@@ -43,7 +43,7 @@ app.use(express.static(__dirname + '/public'));
 var archiveTransaction = function(voided) {
   return query(mysql.format("INSERT INTO ??.transactions_archive (voided, user, first_timestamp, last_timestamp) values(?, NULL, (SELECT min(timestamp) from ??.transaction_time), (SELECT max(timestamp) from ??.transaction_time))", [databaseName, voided, databaseName, databaseName]))
     .then(function(result){
-      tid = result.insertId;
+      tid = result.insertId; // TODO: this is global
       return query(mysql.format("SELECT * FROM ??.current_transaction_view", databaseName));
     })
     .then(function(results){
@@ -104,7 +104,7 @@ app.delete("/transaction/:itemId", function(req, res){
 app.delete("/transaction" , function(req, res) {
     archiveTransaction(true)
     .then(function() {
-      res.send('');
+      res.send({"tid":tid});
     }).catch(function(err){
       console.log("Error in 'DELETE /transaction':");
       console.log(err);
@@ -117,7 +117,7 @@ app.post("/transaction", function(req,res) {
     // TODO: we don't actually reduce the counts in `inventory` when selling items
     archiveTransaction(false)
     .then(function(){
-      res.send('');
+      res.send({"tid":tid});
     }).catch(function(err){
       console.log("Error in 'POST /transaction':");
       console.log(err);
