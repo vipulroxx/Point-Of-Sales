@@ -40,6 +40,26 @@ app.use(express.static(__dirname + '/public'));
 // The desired behaviours of the following routes is described in api.md
 // ---------------------------------------------------------------------
 
+var archiveTransaction = function(voided) {
+  return query(mysql.format("INSERT INTO ??.transactions_archive (voided, user, first_timestamp, last_timestamp) values(?, NULL, (SELECT min(timestamp) from ??.transaction_time), (SELECT max(timestamp) from ??.transaction_time))", [databaseName, voided, databaseName, databaseName]))
+    .then(function(result){
+      tid = result.insertId;
+      return query(mysql.format("SELECT * FROM ??.current_transaction_view", databaseName));
+    })
+    .then(function(results){
+      results = results.map(function(row){
+        return "(" + tid + ", " + mysql.escape(row.item) + ", " + row.count + ", " + (row.price * row.count) + ")";
+      });
+      var resultString = results.join(",");
+      return query(mysql.format("INSERT INTO ??.transaction_items_archive (tid, item, count, subtotal) values" + resultString, databaseName));
+    })
+    .then(function(){
+      return query(mysql.format("TRUNCATE ??.transaction", databaseName));
+    })
+    .then(function(){
+      return query(mysql.format("TRUNCATE ??.transaction_time", databaseName));
+    });
+}
 
 app.get("/buttons",function(req,res){
   var sql = mysql.format('SELECT buttonID,`left`,top,width,invID,item AS label FROM ??.till_buttons,??.inventory WHERE invID = id', [databaseName,databaseName]);
@@ -54,7 +74,7 @@ app.get("/buttons",function(req,res){
 
 app.get("/transaction" , function(req,res) {
   query("SELECT itemId,count(itemId) AS count,price, item FROM "+databaseName+ ".transaction," +databaseName+ ".prices," +databaseName+ ".inventory"+
-			" WHERE prices.id=itemId AND itemId=inventory.id GROUP BY itemId;").then(function(rows) {
+                       " WHERE prices.id=itemId AND itemId=inventory.id GROUP BY itemId;").then(function(rows) {
     res.send(rows);
   }).catch(function(err){
     console.log("Error in 'GET /transaction':");
@@ -82,29 +102,10 @@ app.delete("/transaction/:itemId", function(req, res){
 });
 
 app.delete("/transaction" , function(req, res) {
-  
-  query(mysql.format("INSERT INTO ??.transactions_archive (voided, user, first_timestamp, last_timestamp) values(true, NULL, (SELECT min(timestamp) from ??.transaction_time), (SELECT max(timestamp) from ??.transaction_time))", [databaseName, databaseName, databaseName]))
-    .then(function(result){
-      tid = result.insertId;
-      return query(mysql.format("SELECT * FROM ??.current_transaction_view", databaseName));
-    })
-    .then(function(results){
-      results = results.map(function(row){
-        return "(" + tid + ", " + mysql.escape(row.item) + ", " + row.count + ", " + (row.price * row.count) + ")";
-      });
-      var resultString = results.join(",");
-      return query(mysql.format("INSERT INTO ??.transaction_items_archive (tid, item, count, subtotal) values" + resultString, databaseName));
-    })
-    .then(function(){
-      return query(mysql.format("TRUNCATE ??.transaction", databaseName));
-    })
-    .then(function(){
-      return query(mysql.format("TRUNCATE ??.transaction_time", databaseName));
-    })
-    .then(function(){
+    archiveTransaction(true)
+    .then(function() {
       res.send('');
-    })
-    .catch(function(err){
+    }).catch(function(err){
       console.log("Error in 'DELETE /transaction':");
       console.log(err);
       res.sendStatus(500);
@@ -114,29 +115,11 @@ app.delete("/transaction" , function(req, res) {
 app.post("/transaction", function(req,res) {
   if (req.body["action"] == "commit sale") {
     // TODO: we don't actually reduce the counts in `inventory` when selling items
-    query(mysql.format("INSERT INTO ??.transactions_archive (voided, user, first_timestamp, last_timestamp) values(false, NULL, (SELECT min(timestamp) from ??.transaction_time), (SELECT max(timestamp) from ??.transaction_time))", [databaseName, databaseName, databaseName]))
-    .then(function(result){
-      tid = result.insertId;
-      return query(mysql.format("SELECT * FROM ??.current_transaction_view", databaseName));
-    })
-    .then(function(results){
-      results = results.map(function(row){
-        return "(" + tid + ", " + mysql.escape(row.item) + ", " + row.count + ", " + (row.price * row.count) + ")";
-      });
-      var resultString = results.join(",");
-      return query(mysql.format("INSERT INTO ??.transaction_items_archive (tid, item, count, subtotal) values" + resultString, databaseName));
-    })
-    .then(function(){
-      return query(mysql.format("TRUNCATE ??.transaction", databaseName));
-    })
-    .then(function(){
-      return query(mysql.format("TRUNCATE ??.transaction_time", databaseName));
-    })
+    archiveTransaction(false)
     .then(function(){
       res.send('');
-    })
-    .catch(function(err){
-      console.log("Error in 'DELETE /transaction':");
+    }).catch(function(err){
+      console.log("Error in 'POST /transaction':");
       console.log(err);
       res.sendStatus(500);
     });
