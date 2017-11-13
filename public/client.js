@@ -56,15 +56,22 @@ function ButtonCtrl($scope,buttonApi){
       $scope.errorMessage='';
       buttonApi.deleteItems(id)
          .success(refreshItems)
-         .error(function(){$scope.errorMessage="Unable to delete item(s)";});
+         .error(function(){$scope.errorMessage="Unable to delete item(s)!";});
    }
 
    function buttonClick($event){
       $scope.errorMessage='';
       buttonApi.clickButton($event.target.id)
          .success(refreshItems)
-         .error(function(){$scope.errorMessage="Unable click";});
+         .error(function(){$scope.errorMessage="Unable to add item(s)!";});
    }
+   $scope.voidTransaction = function() {
+      $scope.errorMessage='';
+     buttonApi.voidTransaction()
+         .success(refreshItems)
+         .error(function(){$scope.errorMessag="Failure while voiding!";});
+   }
+   
    refreshButtons();  //make sure the buttons are loaded
    refreshItems();
 
@@ -87,7 +94,11 @@ function buttonApi($http,apiUrl){
     deleteItems: function(id){
       var url = apiUrl + '/transaction/' + id;
       return $http.delete(url);
+    },
+    voidTransaction: function() {
+      var url = apiUrl+'/transaction';
+      return $http.delete(url);
     }
- };
+  };
 }
 

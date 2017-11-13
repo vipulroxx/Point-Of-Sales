@@ -12,7 +12,7 @@
   <h1>Cash Register</h1>
   <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
     <div class="btn-group btn-group-lg" role="group" aria-label="First group">
-      <button type="button" class="btn btn-secondary" ng-repeat="button in buttons" id="{{button.buttonID}}" ng-click="buttonClick($event,'button.buttonID');">
+      <button type="button" class="btn btn-info" ng-repeat="button in buttons" id="{{button.buttonID}}" ng-click="buttonClick($event,'button.buttonID');">
         {{button.label}}
       </button>
     </div>
@@ -45,6 +45,13 @@
       </tr>
     </thead>
   </table>
+  <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+    <div class="btn-group btn-group-lg" role="group" aria-label="First group">
+      <button type="button" class="btn btn-danger" ng-click="voidTransaction()" ng-disabled="items.length === 0">
+        VOID
+      </button>
+    </div>
+  </div>
   <div style="position:fixed;height:50px;bottom:0px;left:0px;right:0px;margin-bottom:0px"} ng-show="errorMessage != ''">
      <div class="col-sm-12">
       <h3 class="text-danger">{{errorMessage}}</h3>
