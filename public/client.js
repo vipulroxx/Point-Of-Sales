@@ -71,11 +71,17 @@ function ButtonCtrl($scope,buttonApi){
          .success(refreshItems)
          .error(function(){$scope.errorMessag="Failure while voiding!";});
    }
-   
+  
+  $scope.completeTransaction = function() {
+    $scope.errorMessage='';
+    buttonApi.completeTransaction()
+          .success(refreshItems)
+          .error(function() {$scope.errorMessage="Failure while completing transaction!";});
+  }
+
    refreshButtons();  //make sure the buttons are loaded
    refreshItems();
-
-}  
+}
 
 function buttonApi($http,apiUrl){
   return{
@@ -98,6 +104,10 @@ function buttonApi($http,apiUrl){
     voidTransaction: function() {
       var url = apiUrl+'/transaction';
       return $http.delete(url);
+    },
+    completeTransaction: function() {
+      var url= apiUrl + '/transaction';
+      return $http.post(url, { "action" :"commit sale" });
     }
   };
 }

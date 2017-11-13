@@ -46,9 +46,14 @@
     </thead>
   </table>
   <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
-    <div class="btn-group btn-group-lg" role="group" aria-label="First group">
+    <div class="btn-group btn-group-lg" role="group"> 
       <button type="button" class="btn btn-danger" ng-click="voidTransaction()" ng-disabled="items.length === 0">
         VOID
+      </button>
+    </div>
+    <div class="btn-group btn-group-lg" role="group"> 
+      <button type="button" class="btn btn-success" ng-click="completeTransaction()" ng-disabled="items.length === 0">
+        SELL
       </button>
     </div>
   </div>
