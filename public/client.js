@@ -9,8 +9,10 @@ function ButtonCtrl($scope,buttonApi){
    $scope.errorMessage='';
    $scope.isLoading=isLoading;
    $scope.refreshButtons=refreshButtons;
+   $scope.refreshItems=refreshItems;
    $scope.buttonClick=buttonClick;
    $scope.totalPrice=0;
+   $scope.tid='';
 
    var loading = false;
 
@@ -75,10 +77,17 @@ function ButtonCtrl($scope,buttonApi){
   $scope.completeTransaction = function() {
     $scope.errorMessage='';
     buttonApi.completeTransaction()
-          .success(refreshItems)
+          .success(function(response){
+            $scope.tid = response.tid;
+          })
           .error(function() {$scope.errorMessage="Failure while completing transaction!";});
   }
-
+  $scope.printReceipt = function() {
+    window.frames["print_frame"].document.body.innerHTML=document.getElementById("to-be-printed").innerHTML;
+    window.frames["print_frame"].window.focus();
+    window.frames["print_frame"].window.print();
+    refreshItems();
+  }
    refreshButtons();  //make sure the buttons are loaded
    refreshItems();
 }
