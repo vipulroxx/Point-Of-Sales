@@ -44,7 +44,6 @@ so clicking the `X` or `Skip` will not cancel the transaction. After the prompt 
 closed, the webpage will display a fresh, empty transaction.
 
 
-
 # Appendix: API Documentation
 Our API provides endpoints for fetching buttons and manipulating the transaction
 
@@ -74,17 +73,44 @@ the following keys.
 
 ### DELETE /transaction
 
-Removes all items from the transaction.  The posted body is ignored 
-and the response code will be 200 when the operation succeeds.
+Move the transaction to the archive and mark as VOID. The sale will 
+be attributed to the currently logged in user. The posted 
+body is ignored and the response code will be 200 when the 
+operation succeeds. 
+
+### POST /transaction
+
+If the request body is JSON containing a key `"action"` associated
+with the value `"commit sale"`, moves the transaction to the archive
+and marks as _not_ VOID. The sale will be attributed to the currently
+logged in user. The response code will be 200 when the operation succeeds.
 
 ### POST /transaction/{itemId}
 
 Increments the count of the item with the itemId in the transaction.
 The posted body is ignored and the response code will be 200 when the 
-operation succeeds.
+operation succeeds. Adds a timestamp to the log of actions for this 
+transaction.
 
 ### DELETE /transaction/{itemId}
 
 Completely removes the item with itemId from the transaction.
 The posted body is ignored and the response code will be 200 when the 
-operation succeeds.
+operation succeeds. Adds a timestamp to the log of actions for this 
+transaction.
+
+### POST /login
+
+Expects a JSON body containing at least:
+- `username`: (string) the username of the user to which we will attribute 
+              future transactions
+- `password`: (string) plaintext password for the user
+
+This user will be marked as the owner of the transaction until `POST /logout` 
+is requested or until a new successful `POST /login` is requested.
+Returns error code 200 when the operation succeeds.
+
+### POST /logout
+
+Expects no body. Causes future transactions to have no user associated 
+with them until `POST /login` is successfully submitted.
