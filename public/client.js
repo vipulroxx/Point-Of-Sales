@@ -13,6 +13,7 @@ function ButtonCtrl($scope,buttonApi){
    $scope.buttonClick=buttonClick;
    $scope.totalPrice=0;
    $scope.tid='';
+   $scope.loggedIn=false;
 
    var loading = false;
 
@@ -82,12 +83,27 @@ function ButtonCtrl($scope,buttonApi){
           })
           .error(function() {$scope.errorMessage="Failure while completing transaction!";});
   }
+
   $scope.printReceipt = function() {
     window.frames["print_frame"].document.body.innerHTML=document.getElementById("to-be-printed").innerHTML;
     window.frames["print_frame"].window.focus();
     window.frames["print_frame"].window.print();
     refreshItems();
   }
+
+  $scope.login = function() {
+    $scope.errorMessage='';
+    var username = document.getElementById('lg_username').value;
+    var password = document.getElementById('lg_password').value;
+    buttonApi.login(username, password)
+      .success(function() {
+        $scope.loggedIn = true;
+      })
+      .error(function() {
+        $scope.errorMessage="Failure logging in!";
+      });
+  };
+
    refreshButtons();  //make sure the buttons are loaded
    refreshItems();
 }
@@ -116,7 +132,11 @@ function buttonApi($http,apiUrl){
     },
     completeTransaction: function() {
       var url= apiUrl + '/transaction';
-      return $http.post(url, { "action" :"commit sale" });
+      return $http.post(url, {"action" :"commit sale"});
+    },
+    login: function(username, password) {
+      var url= apiUrl + '/login';
+      return $http.post(url, {"username": username, "password": password});
     }
   };
 }
