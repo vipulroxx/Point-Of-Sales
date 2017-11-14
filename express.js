@@ -13,8 +13,12 @@ Promise.promisifyAll(require("mysql/lib/Pool").prototype);
 credentials.host='ids.morris.umn.edu'; //setup database credentials
 var databaseName = "schr1230";
 
+
 // Created a connection pool
 connectionPool = mysql.createPool(credentials); // setup the connection
+
+// current logged in user
+var currentUser='';
 
 //
 var getConnection = function(){
@@ -60,6 +64,7 @@ var archiveTransaction = function(voided) {
       return query(mysql.format("TRUNCATE ??.transaction_time", databaseName));
     });
 }
+
 
 app.get("/buttons",function(req,res){
   var sql = mysql.format('SELECT buttonID,`left`,top,width,invID,item AS label FROM ??.till_buttons,??.inventory WHERE invID = id', [databaseName,databaseName]);
@@ -146,6 +151,28 @@ app.post("/transaction/:itemId" , function(req,res) {
         res.sendStatus(500); 
       }
     });
+});
+
+app.post("/login", function(req,res) {
+  if((req.body["username"] !== undefined) && (req.body["password"] !== undefined)){
+    // check that this user is authorized
+    query(mysql.format("SELECT * FROM ??.till_users where username = ? AND password = ?", [databaseName, req.body["username"], req.body["password"]]))
+      .then(function(users){
+        if(users.length !== 0){
+          currentUser = req.body["username"]; 
+          res.send('');
+        } else {
+          res.sendStatus(403);
+        }
+      });
+  } else {
+    res.sendStatus(400);
+  }
+});
+
+app.post("/logout", function(req,res) {
+  currentUser = '';
+  res.sendStatus(204);
 });
 
 app.listen(port);
