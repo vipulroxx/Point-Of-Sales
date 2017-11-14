@@ -99,7 +99,7 @@ function ButtonCtrl($scope,buttonApi){
     buttonApi.login(username, password)
       .success(function() {
         $scope.loggedIn = true;
-        $scope.currentUser = username;
+        $scope.currentUser = username.charAt(0).toUpperCase(0) + username.slice(1);
       })
       .error(function() {
         $scope.errorMessage="Failure logging in!";
