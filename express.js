@@ -17,9 +17,6 @@ var databaseName = "schr1230";
 // Created a connection pool
 connectionPool = mysql.createPool(credentials); // setup the connection
 
-// current logged in user
-var currentUser='';
-
 //
 var getConnection = function(){
   return connectionPool.getConnectionAsync().disposer(
@@ -159,7 +156,6 @@ app.post("/login", function(req,res) {
     query(mysql.format("SELECT * FROM ??.till_users where username = ? AND password = ?", [databaseName, req.body["username"], req.body["password"]]))
       .then(function(users){
         if(users.length !== 0){
-          currentUser = req.body["username"]; 
           res.send('');
         } else {
           res.sendStatus(403);
@@ -168,11 +164,6 @@ app.post("/login", function(req,res) {
   } else {
     res.sendStatus(400);
   }
-});
-
-app.post("/logout", function(req,res) {
-  currentUser = '';
-  res.sendStatus(204);
 });
 
 app.listen(port);
