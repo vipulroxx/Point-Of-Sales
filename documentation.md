@@ -1,4 +1,51 @@
-# API Documentation
+# User Manual
+
+This document describes how to use the web interface for our point-of-sale system.
+
+Two general notes:
+1. None of the actions prompt for confirmation.
+2. If things don't seem to be going as expected, check the bottom of the screen, which
+   is where errors are displayed.
+
+## Setup
+
+To get the server up and running run:
+
+```
+$ npm install
+$ node express
+```
+
+
+You'll also need to setup `credentials.json` with the following contents
+```
+{
+  "user": "your username",
+  "password": "your password"
+}
+```
+
+## Login
+
+When (re)-loaded, the page will always display the login screen. Enter your assigned
+username and password. All sales will be attributed to you until you refresh the page. 
+
+## Manipulating Transaction
+
+- To clear _all_ items in the transaction, click the `VOID` button.
+- To add items to the transaction, click on the buttons at the top of the screen. 
+- To remove items, click on the entry in the list of current items in the transaction.
+
+## Selling Transaction
+
+To complete the transaction, click the SELL button. You will then be prompted to print
+the receipt. Note that the transaction is completed by the time the prompt is displayed, 
+so clicking the `X` or `Skip` will not cancel the transaction. After the prompt is 
+closed, the webpage will display a fresh, empty transaction.
+
+
+
+# Appendix: API Documentation
 Our API provides endpoints for fetching buttons and manipulating the transaction
 
 ## Buttons
