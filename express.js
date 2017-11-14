@@ -45,7 +45,7 @@ app.use(express.static(__dirname + '/public'));
 // ---------------------------------------------------------------------
 
 var archiveTransaction = function(voided) {
-  return query(mysql.format("INSERT INTO ??.transactions_archive (voided, user, first_timestamp, last_timestamp) values(?, NULL, (SELECT min(timestamp) from ??.transaction_time), (SELECT max(timestamp) from ??.transaction_time))", [databaseName, voided, databaseName, databaseName]))
+  return query(mysql.format("INSERT INTO ??.transactions_archive (voided, user, first_timestamp, last_timestamp) values(?, ?, (SELECT min(timestamp) from ??.transaction_time), (SELECT max(timestamp) from ??.transaction_time))", [databaseName, voided, currentUser, databaseName, databaseName]))
     .then(function(result){
       tid = result.insertId; // TODO: this is global
       return query(mysql.format("SELECT * FROM ??.current_transaction_view", databaseName));

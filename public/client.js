@@ -14,6 +14,7 @@ function ButtonCtrl($scope,buttonApi){
    $scope.totalPrice=0;
    $scope.tid='';
    $scope.loggedIn=false;
+   $scope.currentUser="";
 
    var loading = false;
 
@@ -98,6 +99,7 @@ function ButtonCtrl($scope,buttonApi){
     buttonApi.login(username, password)
       .success(function() {
         $scope.loggedIn = true;
+        $scope.currentUser = username;
       })
       .error(function() {
         $scope.errorMessage="Failure logging in!";
