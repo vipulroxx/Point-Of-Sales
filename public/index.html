@@ -24,11 +24,11 @@
 				<div class="login-group">
 					<div class="form-group">
 						<label for="lg_username" class="sr-only">Username</label>
-						<input type="text" class="form-control" id="lg_username" name="lg_username" placeholder="username">
+						<input type="text" class="form-control" id="lg_username" name="lg_username" ng-model="currentUser" placeholder="username">
 					</div>
 					<div class="form-group">
 						<label for="lg_password" class="sr-only">Password</label>
-						<input type="password" class="form-control" id="lg_password" name="lg_password" placeholder="password">
+						<input type="password" class="form-control" id="lg_password" name="lg_password" ng-model="currentPassword" placeholder="password">
 					</div>
 				</div>
 			</div>
@@ -46,6 +46,11 @@
       <div class="btn-group btn-group-lg" role="group" aria-label="First group">
         <button type="button" class="btn btn-info" ng-repeat="button in buttons" id="{{button.buttonID}}" ng-click="buttonClick($event,'button.buttonID');">
           {{button.label}}
+        </button>
+      </div>
+      <div class="btn-group btn-group-lg" role="group" style="padding-left:6%;">  
+        <button type="button" class="btn btn-primary" ng-click="logout()">
+          LOGOUT
         </button>
       </div>
     </div>

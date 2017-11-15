@@ -15,6 +15,7 @@ function ButtonCtrl($scope,buttonApi){
    $scope.tid='';
    $scope.loggedIn=false;
    $scope.currentUser="";
+   $scope.currentPassword="";
 
    var loading = false;
 
@@ -94,17 +95,28 @@ function ButtonCtrl($scope,buttonApi){
 
   $scope.login = function() {
     $scope.errorMessage='';
-    var username = document.getElementById('lg_username').value;
-    var password = document.getElementById('lg_password').value;
-    buttonApi.login(username, password)
+    buttonApi.login($scope.currentUser, $scope.currentPassword)
       .success(function() {
         $scope.loggedIn = true;
-        $scope.currentUser = username.charAt(0).toUpperCase(0) + username.slice(1);
+        $scope.currentPassword = '';
+        $scope.currentUser = $scope.currentUser.charAt(0).toUpperCase(0) + $scope.currentUser.slice(1);
       })
       .error(function() {
         $scope.errorMessage="Failure logging in!";
       });
   };
+  $scope.logout = function() {
+    $scope.errorMessage='';
+    buttonApi.logout()
+      .success(function() {
+        $scope.loggedIn = false;
+        $scope.currentUser = '';
+      })
+      .error(function() {
+        $scope.errorMessage="Failure logging out!";
+      });
+  };
+
 
    refreshButtons();  //make sure the buttons are loaded
    refreshItems();
@@ -139,6 +151,10 @@ function buttonApi($http,apiUrl){
     login: function(username, password) {
       var url= apiUrl + '/login';
       return $http.post(url, {"username": username, "password": password});
+    },
+    logout: function(){
+      var url= apiUrl + '/logout';
+      return $http.post(url);
     }
   };
 }
